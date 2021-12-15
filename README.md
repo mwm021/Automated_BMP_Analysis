@@ -7,9 +7,9 @@
 
 <h2>Getting Started</h2>
 1. Install python if you don&#39;t have it installed already
-  1. Go to: [https://www.python.org/downloads/release/python-397/](https://www.python.org/downloads/release/python-397/)
+  1. Go to: https://www.python.org/downloads/release/python-397/
   2. Install the optional features for **pip** and **Python launcher** if using Windows
-2. Make sure the following packages are installed with [pip](https://pip.pypa.io/en/stable/user_guide/)
+2. Make sure the following packages are installed with https://pip.pypa.io/en/stable/user_guide/
   1. os, glob, csv, re, shutil, warnings (these are part of the standard python library, so they should already be installed)
   2. numpy
   3. pandas
