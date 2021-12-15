@@ -22,9 +22,9 @@
 
 Install packages on the Command Prompt (Windows) or Terminal (MacOS) like so:
 
-**(Windows) py -m pip install <<name of package>>**
+**(Windows) py -m pip install <name of package>**
 
-**(MacOS) python -m pip install <<name of package>>**
+**(MacOS) python -m pip install <name of package>**
 
 See [here](https://pip.pypa.io/en/stable/installation/) for more information about installing pip here if you are having issues, it should come pre-installed when you download python. See [here](https://stackoverflow.com/questions/23708898/pip-is-not-recognized-as-an-internal-or-external-command) about a common issue with Windows where pip is not recognized as a command on the Command Prompt. This shouldn't be an issue if you install pip when you installed Python.
 
@@ -38,8 +38,8 @@ See [here](https://pip.pypa.io/en/stable/installation/) for more information abo
 
 1. Open Command Prompt (on Windows) or Terminal (MacOS)
 2. Navigate to the path of the folder you created in Step 3 of Getting Started
-  1. Windows: **cd /D <<path to your folder>>** (You can copy the path to your folder from the top bar of the file navigator, then paste it where <<path to your folder>> is in this command)
-  2. MacOS: **cd <<path to your folder>>** (You can copy the path to your folder by right clicking on the folder in Finder while holding the option key, then clicking "Copy <<folder>> as Pathname", then paste it where <<path to your folder>> is in this command)
+  1. Windows: **cd /D <path to your folder>** (You can copy the path to your folder from the top bar of the file navigator, then paste it where <path to your folder> is in this command)
+  2. MacOS: **cd <path to your folder>** (You can copy the path to your folder by right clicking on the folder in Finder while holding the option key, then clicking "Copy <folder> as Pathname", then paste it where <path to your folder> is in this command)
 3. Run getMSNames.py
 
 Now that you've navigated to the folder where everything is, type the following:
