@@ -307,7 +307,7 @@ def get_heatmap(df):
         copp_obs = df[df["Analyte"] == "Copper"]["NumObservations"].iloc[0]
         copp_dl = df[df["Analyte"] == "Copper"]["NumObservationsBelowDetect"].iloc[0]
 
-    df["rpd"] = (df["rpd"] * 100).astype(np.int)
+    df["rpd"] = df["rpd"].astype(np.int)
     df["rpd_w_percent"] = df["rpd"].astype(str) + "%"
     df["Quartile"] = df["Quartile"].astype("category")
 
