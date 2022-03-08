@@ -70,8 +70,12 @@ exportPath = os.path.join(os.getcwd(), "Export")
 if not os.path.exists(exportPath):
     os.makedirs(exportPath)
 
+all_merged_resample = []
+
 def rpd(original, resampled):
     resampled = resampled.rename(columns = {"EMC" : "resampledEMC"})
+    for_export = resampled.merge(original, how = "left")
+    all_merged_resample.append(for_export[["Run", "N", "Location", "Analyte", "Quartile", "resampledEMC", "EMC"]])
     resampled = resampled.merge(original, how = "left", on = "Quartile").drop(columns = ["Location_x", "Analyte_x", "Flow_x", "Location_y", "Analyte_y", "Flow_y"])
     resampled["rpd"] = resampled.apply(lambda x: abs(x["resampledEMC"] - x["EMC"])/((x["resampledEMC"] + x["EMC"])/2), axis = 1)
     return resampled.groupby(["N", "Quartile"])["rpd"].agg("mean")
@@ -95,9 +99,9 @@ def create_output():
         csv_files = glob.glob(os.path.join(dir, "*.csv"))
         all_metadata_files.extend(csv_files)
 
-    Copper_ScatterData = pd.DataFrame(columns = ["N", "Quartile", "median", "std", "rpd", "Location", "Flow", "Analyte", "NumObservations", "NearMedianDetectionLimit", "changeRPD", "percentOriginal", "skewnessCategory", "distributionCategory"])
-    TSS_ScatterData = pd.DataFrame(columns = ["N", "Quartile", "median", "std", "rpd", "Location", "Flow", "Analyte", "NumObservations", "NearMedianDetectionLimit", "changeRPD", "percentOriginal", "skewnessCategory", "distributionCategory"])
-    Phosphorus_ScatterData = pd.DataFrame(columns = ["N", "Quartile", "median", "std", "rpd", "Location", "Flow", "Analyte", "NumObservations", "NearMedianDetectionLimit", "changeRPD", "percentOriginal", "skewnessCategory", "distributionCategory"])
+    Copper_ScatterData = pd.DataFrame(columns = ["N", "Quartile", "median", "std", "rpd", "Location", "Flow", "Analyte", "NumObservations", "NearMedianDetectionLimit", "NumObservationsBelowDetect","changeRPD", "percentOriginal", "skewnessCategory", "skewnessValue", "coefficientOfVariation", "averageAnnualMonthsSampled", "inductionRatio", "distributionCategory"])
+    TSS_ScatterData = pd.DataFrame(columns = ["N", "Quartile", "median", "std", "rpd", "Location", "Flow", "Analyte", "NumObservations", "NearMedianDetectionLimit", "NumObservationsBelowDetect","changeRPD", "percentOriginal", "skewnessCategory", "skewnessValue", "coefficientOfVariation", "averageAnnualMonthsSampled", "inductionRatio", "distributionCategory"])
+    Phosphorus_ScatterData = pd.DataFrame(columns = ["N", "Quartile", "median", "std", "rpd", "Location", "Flow", "Analyte", "NumObservations", "NearMedianDetectionLimit", "NumObservationsBelowDetect", "changeRPD", "percentOriginal", "skewnessCategory", "skewnessValue", "coefficientOfVariation", "averageAnnualMonthsSampled", "inductionRatio",  "distributionCategory"])
 
     for dataFile in all_original_files:
         fileName = os.path.basename(dataFile).split(".")[0]
@@ -116,7 +120,10 @@ def create_output():
         fullResampledDataframe["N"] = fullResampledDataframe["N"].astype("category")
         values = fullResampledDataframe["N"].unique()
 
-        if "n=20" not in values and "n=25" not in values:
+        if "n=20" not in values and "n=25" not in values and "n=15" not in values:
+            fullResampledDataframe["N"] = fullResampledDataframe["N"].cat.reorder_categories(["n=5", "n=10"])
+            color_list = ["#2c925f", "#2e4057", "#000000"]
+        if "n=20" not in values and "n=25" not in values and "n=15" in values:
             fullResampledDataframe["N"] = fullResampledDataframe["N"].cat.reorder_categories(["n=5", "n=10", "n=15"])
             color_list = ["#2c925f", "#2e4057", "#810f7c", "#000000"]
         if "n=20" in values and "n=25" not in values:
@@ -127,6 +134,7 @@ def create_output():
             color_list = ["#2c925f", "#2e4057", "#810f7c", "#de2d26", "#41b6c4", "#000000"]
 
         Quartiles = [0.1, 0.25, 0.5, 0.75, 0.9]
+
 
         resampledQuartiles = fullResampledDataframe.groupby(["Run", "N", "Location", "Analyte", "Flow"])["EMC"].quantile(Quartiles).reset_index().rename(columns = {"level_5" : "Quartile"})
         originalQuartiles = originalDataframe.groupby(["Location", "Analyte", "Flow"])["EMC"].quantile(Quartiles).reset_index().rename(columns = {"level_3" : "Quartile"})
@@ -143,6 +151,10 @@ def create_output():
         heatmapData["NearMedianDetectionLimit"] = metadataDataframe["Number_of_Obs_near_dl"].iloc[0]
         heatmapData["skewnessCategory"] = metadataDataframe["skewnessCategory"].iloc[0]
         heatmapData["distributionCategory"] = metadataDataframe["distributionCategory"].iloc[0]
+        heatmapData["skewnessValue"] = metadataDataframe["skewnessValue"].iloc[0]
+        heatmapData["coefficientOfVariation"] = metadataDataframe["coefficientOfVariation"].iloc[0]
+        heatmapData["averageAnnualMonthsSampled"] = metadataDataframe["averageAnnualMonthsSampled"].iloc[0]
+        heatmapData["inductionRatio"] = metadataDataframe["inductionRatio"].iloc[0]
         heatmapData = heatmapData.reset_index()
         heatmapData["changeRPD"] = heatmapData.groupby(["Quartile"])["rpd"].apply(lambda row: abs(row - row.shift())).fillna(0)
         heatmapData["percentOriginal"] = heatmapData.apply(lambda row: (int(row["N"].split("=")[1])/row["NumObservations"]) * 100, axis = 1)
@@ -250,6 +262,9 @@ def create_output():
     combined_ScatterData = pd.concat([Copper_ScatterData, TSS_ScatterData, Phosphorus_ScatterData])
     combined_ScatterData.to_csv(os.path.join(scatterDataPath, "all_scatter_data.csv"), index = False)
 
+    merged_original_and_resampled_data = pd.concat(all_merged_resample)
+    merged_original_and_resampled_data.to_csv(os.path.join(scatterDataPath, "merged_original_and_resampled_data.csv"), index = False)
+
 def create_heatmap():
     subDirs = glob.glob(os.path.join(heatmapDataPath, "*"))
 
@@ -259,7 +274,9 @@ def create_heatmap():
         if inflow_dfs:
             for df in inflow_dfs:
                 values = df["N"].unique()
-                if "n=20" not in values and "n=25" not in values:
+                if "n=20" not in values and "n=25" not in values and "n=15" not in values:
+                    df["N"] = df["N"].astype("category").cat.reorder_categories(["n=10", "n=5"])
+                if "n=20" not in values and "n=25" not in values and "n=15" in values:
                     df["N"] = df["N"].astype("category").cat.reorder_categories(["n=15", "n=10", "n=5"])
                 if "n=20" in values and "n=25" not in values:
                     df["N"] = df["N"].astype("category").cat.reorder_categories(["n=20", "n=15", "n=10", "n=5"])
@@ -274,7 +291,9 @@ def create_heatmap():
         if outflow_dfs:
             for df in outflow_dfs:
                 values = df["N"].unique()
-                if "n=20" not in values and "n=25" not in values:
+                if "n=20" not in values and "n=25" not in values and "n=15" not in values:
+                    df["N"] = df["N"].astype("category").cat.reorder_categories(["n=10", "n=5"])
+                if "n=20" not in values and "n=25" not in values and "n=15" in values:
                     df["N"] = df["N"].astype("category").cat.reorder_categories(["n=15", "n=10", "n=5"])
                 if "n=20" in values and "n=25" not in values:
                     df["N"] = df["N"].astype("category").cat.reorder_categories(["n=20", "n=15", "n=10", "n=5"])

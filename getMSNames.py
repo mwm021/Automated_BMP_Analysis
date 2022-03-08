@@ -28,7 +28,7 @@ if not os.path.exists(zoneDataPath):
     os.makedirs(zoneDataPath)
 
 def get_msnames():
-    desiredDirs = [2, 3, 6, 1, 9]
+    desiredDirs = [2, 3, 6, 1, 9, "NSWQ"]
 
     subdirs = glob.glob(os.path.join(zoneDataPath, "*"))
 

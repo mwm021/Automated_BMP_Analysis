@@ -1,2 +1,2 @@
-Number_of_raw_Observations,Number_of_below_detect_Observations,Number_of_excluded_Observations,Number_of_final_Observations,Number_of_Obs_near_dl,mdl,skewnessCategory,distributionCategory
-52,1,0,52,1,0.5,heavy_right_skew,BCPEo
+Number_of_raw_Observations,Number_of_below_detect_Observations,Number_of_excluded_Observations,Number_of_final_Observations,Number_of_Obs_near_dl,mdl,skewnessCategory,skewnessValue,coefficientOfVariation,averageAnnualMonthsSampled,inductionRatio,distributionCategory
+52,1,0,52,1,0.5,heavy_right_skew,2.875946806605095,0.8901342015762128,5,956.0,BCPEo

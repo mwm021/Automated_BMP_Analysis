@@ -1,2 +1,2 @@
-Number_of_raw_Observations,Number_of_below_detect_Observations,Number_of_excluded_Observations,Number_of_final_Observations,Number_of_Obs_near_dl,mdl,skewnessCategory,distributionCategory
-27,0,0,27,0,,heavy_right_skew,GA
+Number_of_raw_Observations,Number_of_below_detect_Observations,Number_of_excluded_Observations,Number_of_final_Observations,Number_of_Obs_near_dl,mdl,skewnessCategory,skewnessValue,coefficientOfVariation,averageAnnualMonthsSampled,inductionRatio,distributionCategory
+27,0,0,27,0,,heavy_right_skew,1.0910486431478794,0.7110391829033758,7,26.4,GA
