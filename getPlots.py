@@ -138,7 +138,7 @@ def create_output():
 
         resampledQuartiles = fullResampledDataframe.groupby(["Run", "N", "Location", "Analyte", "Flow"])["EMC"].quantile(Quartiles).reset_index().rename(columns = {"level_5" : "Quartile"})
         originalQuartiles = originalDataframe.groupby(["Location", "Analyte", "Flow"])["EMC"].quantile(Quartiles).reset_index().rename(columns = {"level_3" : "Quartile"})
-        originalQuartiles["resampled_vline_label"] = "Quantile\nEMC"
+        originalQuartiles["resampled_vline_label"] = "Quartile\nEMC"
         originalQuartiles["original_vline_label"] = "Parent\ndataset\nmedian\ndetection\nlimit"
 
         heatmapData = resampledQuartiles.groupby(["N", "Quartile"])["EMC"].agg(["median", "std"])
