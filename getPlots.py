@@ -188,7 +188,7 @@ def create_output():
                 originalQuartiles["Analyte"].replace({
                         "Copper" : "Dissolved Copper",
                         "Phosphorus" : "Total Phosphorus",
-                        "TSS" : "Total Dissolved Solids"
+                        "TSS" : "Total Suspended Solids"
                         }, inplace = True)
 
                 finalPlot, ax1 = plt.subplots()
