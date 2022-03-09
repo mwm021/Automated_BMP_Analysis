@@ -333,7 +333,7 @@ def get_heatmap(df):
     df["Analyte"].replace({
             "Copper" : "Dissolved Copper\nBelow-detection = " + str(copp_dl) + "\nFinal Observations = " + str(copp_obs),
             "Phosphorus" : "Total Phosphorus\nBelow-detection = " + str(phos_dl) + "\nFinal Observations = " + str(phos_obs),
-            "TSS" : "Total Dissolved Solids\nBelow-detection = " + str(tss_dl) + "\nFinal Observations = " + str(tss_obs)
+            "TSS" : "Total Suspended Solids\nBelow-detection = " + str(tss_dl) + "\nFinal Observations = " + str(tss_obs)
             }, inplace = True)
 
     heatmap_colors = ["#1cac78", "#b2ec5d", "#c5e384", "#ffae42", "#ffa343", "#ff7f49", "#ff5349", "#ff2b2b", "#fc2847", "#cb4154"]

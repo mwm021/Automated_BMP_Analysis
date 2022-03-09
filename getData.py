@@ -242,6 +242,8 @@ def createDataframes():
     out_names = pd.read_csv(os.path.join(locationsDataPath, "out_msnames.csv"), names=[
                             "OutflowName"])["OutflowName"].to_list()
 
+    numInflows = pd.DataFrame(columns = ["Location", "Analyte", "numInflow"])
+
     for dir in subdirs:
         dirName = dir.split("/")[-1]
 
@@ -274,10 +276,18 @@ def createDataframes():
                     getOutflow(phosphorus, dirName, fileName,
                                "Phosphorus", out_names)
 
+                    if len(phosphorus[(phosphorus["msname"].isin(in_names)) & (phosphorus["initialscreen_flag"] != "No")]) >= 15:
+                        num_inflow = len(phosphorus[(phosphorus["msname"].isin(in_names)) & (phosphorus["initialscreen_flag"] != "No")]["msname"].unique())
+                        numInflows = numInflows.append(pd.DataFrame([[fileName, "Phorphorus", num_inflow]], columns = ["Location", "Analyte", "numInflow"]))
+
                 if tssSheet.size != 0:
                     tss = pd.read_excel(file, sheet_name=str(tssSheet[0]))
                     getInflow(tss, dirName, fileName, "TSS", in_names)
                     getOutflow(tss, dirName, fileName, "TSS", out_names)
+
+                    if len(tss[(tss["msname"].isin(in_names)) & (tss["initialscreen_flag"] != "No")]) >= 15:
+                        num_inflow = len(tss[(tss["msname"].isin(in_names)) & (tss["initialscreen_flag"] != "No")]["msname"].unique())
+                        numInflows =numInflows.append(pd.DataFrame([[fileName, "TSS", num_inflow]], columns = ["Location", "Analyte", "numInflow"]))
 
                 if copperSheet.size != 0:
                     copper = pd.read_excel(
@@ -285,8 +295,14 @@ def createDataframes():
                     getInflow(copper, dirName, fileName, "Copper", in_names)
                     getOutflow(copper, dirName, fileName, "Copper", out_names)
 
+                    if len(copper[(copper["msname"].isin(in_names)) & (copper["initialscreen_flag"] != "No")]) >= 15:
+                        num_inflow = len(copper[(copper["msname"].isin(in_names)) & (copper["initialscreen_flag"] != "No")]["msname"].unique())
+                        numInflows = numInflows.append(pd.DataFrame([[fileName, "Copper", num_inflow]], columns = ["Location", "Analyte", "numInflow"]))
+
         else:
             continue
+
+    numInflows.to_csv(os.path.join(metadataPath, "num_inflow_locations.csv"))
 
 
 createDataframes()
