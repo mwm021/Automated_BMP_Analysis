@@ -58,6 +58,8 @@ if not os.path.exists(exportPath):
     os.makedirs(exportPath)
 
 
+median_detection_limits = pd.DataFrame(columns = ["Location", "Analyte", "Flow", "median_detection_limit"])
+
 def getSkew(output_df):
     skewValue = output_df["EMC"].skew()
     if abs(skewValue) > 1:
@@ -102,8 +104,12 @@ def getInduction(output_df):
     return induction
 
 def getMetaData(output_df, original, fileName, dirName, analyte, flow):
+    global median_detection_limits
     below_detect = original[original["wqqualifier"] == "U"]["value_subhalfdl"] * 2
     mdl = below_detect.median()
+
+    median_detection_limits = median_detection_limits.append(pd.DataFrame([[fileName, analyte, flow, mdl]], columns = ["Location", "Analyte", "Flow", "median_detection_limit"]))
+
 
     if mdl == np.nan:
         metaData_df = pd.DataFrame({"Number_of_raw_Observations": len(original),
@@ -306,6 +312,7 @@ def createDataframes():
 
 
 createDataframes()
+median_detection_limits.to_csv(os.path.join(metadataPath, "median_detection_limits.csv"))
 
 shutil.make_archive(os.path.join(os.getcwd(), exportPath, "LocationsData"), "zip", locationsDataPath)
 shutil.make_archive(os.path.join(os.getcwd(), exportPath,
