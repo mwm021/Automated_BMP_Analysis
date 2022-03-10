@@ -59,6 +59,7 @@ if not os.path.exists(exportPath):
 
 
 median_detection_limits = pd.DataFrame(columns = ["Location", "Analyte", "Flow", "median_detection_limit"])
+parent_quartiles = pd.DataFrame(columns = ["Location", "Analyte", "Flow", "NumSamples", "Quartile", "EMC"])
 
 def getSkew(output_df):
     skewValue = output_df["EMC"].skew()
@@ -176,6 +177,7 @@ def resampleData(df, type, dirName, fileName, analyte):
 
 
 def getInflow(df, dirName, fileName, analyte, names):
+    global parent_quartiles
     original_inflow = df[df["msname"].isin(names)]
     inflow = df[(df["msname"].isin(names)) & (
         df["initialscreen_flag"] != "No")]
@@ -201,12 +203,22 @@ def getInflow(df, dirName, fileName, analyte, names):
             if not os.path.exists(LocAnalyte):
                 os.makedirs(LocAnalyte)
 
+            Quartiles = [0.1, 0.25, 0.5, 0.75, 0.9]
+            quartile_values = output_df["EMC"].quantile(Quartiles).reset_index().rename(columns = {"index" : "Quartile"})
+            quartile_values["NumSamples"] = len(output_df)
+            quartile_values["Flow"] = "Inflow"
+            quartile_values["Analyte"] = analyte
+            quartile_values["Location"] = fileName
+
+            parent_quartiles = parent_quartiles.append(quartile_values)
+
             output_df.to_csv(os.path.join(LocAnalyte, dirName + "_"
                                           + fileName + "_inflow_" + analyte.lower() + ".csv"), index=False)
             resampleData(output_df, "inflow", dirName, fileName, analyte)
 
 
 def getOutflow(df, dirName, fileName, analyte, names):
+    global parent_quartiles
     original_outflow = df[df["msname"].isin(names)]
     outflow = df[(df["msname"].isin(names)) & (
         df["initialscreen_flag"] != "No")]
@@ -231,6 +243,15 @@ def getOutflow(df, dirName, fileName, analyte, names):
             LocAnalyte = os.path.join(outputPath, fileName + "_" + analyte)
             if not os.path.exists(LocAnalyte):
                 os.makedirs(LocAnalyte)
+
+            Quartiles = [0.1, 0.25, 0.5, 0.75, 0.9]
+            quartile_values = output_df["EMC"].quantile(Quartiles).reset_index().rename(columns = {"index" : "Quartile"})
+            quartile_values["NumSamples"] = len(output_df)
+            quartile_values["Flow"] = "Outflow"
+            quartile_values["Analyte"] = analyte
+            quartile_values["Location"] = fileName
+
+            parent_quartiles = parent_quartiles.append(quartile_values)
 
             output_df.to_csv(os.path.join(LocAnalyte, dirName + "_"
                                           + fileName + "_outflow_" + analyte.lower() + ".csv"), index=False)
@@ -308,11 +329,12 @@ def createDataframes():
         else:
             continue
 
-    numInflows.to_csv(os.path.join(metadataPath, "num_inflow_locations.csv"))
+    parent_quartiles.to_csv(os.path.join(metadataPath, "parent_dataset_quartiles.csv"), index = False)
+    numInflows.to_csv(os.path.join(metadataPath, "num_inflow_locations.csv"), index = False)
 
 
 createDataframes()
-median_detection_limits.to_csv(os.path.join(metadataPath, "median_detection_limits.csv"))
+median_detection_limits.to_csv(os.path.join(metadataPath, "median_detection_limits.csv"), index = False)
 
 shutil.make_archive(os.path.join(os.getcwd(), exportPath, "LocationsData"), "zip", locationsDataPath)
 shutil.make_archive(os.path.join(os.getcwd(), exportPath,
