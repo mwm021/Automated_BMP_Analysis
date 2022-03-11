@@ -114,7 +114,7 @@ def getMetaData(output_df, original, fileName, dirName, analyte, flow):
 
     if mdl == np.nan:
         metaData_df = pd.DataFrame({"Number_of_raw_Observations": len(original),
-                                    "Number_of_below_detect_Observations": len(original[original["wqqualifier"] == "U"]),
+                                    "Number_of_below_detect_Observations": len(original[(original["wqqualifier"] == "U") & (original["initialscreen_flag"] != "No")]),
                                     "Number_of_excluded_Observations": len(original[original["initialscreen_flag"] == "No"]),
                                     "Number_of_final_Observations": len(output_df),
                                     "Number_of_Obs_near_dl": np.nan,
@@ -128,7 +128,7 @@ def getMetaData(output_df, original, fileName, dirName, analyte, flow):
                                    index=[0])
     else:
         metaData_df = pd.DataFrame({"Number_of_raw_Observations": len(original),
-                                    "Number_of_below_detect_Observations": len(original[original["wqqualifier"] == "U"]),
+                                    "Number_of_below_detect_Observations": len(original[(original["wqqualifier"] == "U") & (original["initialscreen_flag"] != "No")]),
                                     "Number_of_excluded_Observations": len(original[original["initialscreen_flag"] == "No"]),
                                     "Number_of_final_Observations": len(output_df),
                                     "Number_of_Obs_near_dl": len(output_df[(output_df["EMC"] >= mdl - (0.5 * mdl)) & (output_df["EMC"] <= mdl + (0.5 * mdl))]),
