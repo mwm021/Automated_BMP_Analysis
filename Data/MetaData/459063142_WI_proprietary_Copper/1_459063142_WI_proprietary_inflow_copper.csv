@@ -1,2 +1,2 @@
-Number_of_raw_Observations,Number_of_below_detect_Observations,Number_of_excluded_Observations,Number_of_final_Observations,Number_of_Obs_near_dl,mdl,skewnessCategory,skewnessValue,coefficientOfVariation,averageAnnualMonthsSampled,inductionRatio,distributionCategory
-51,15,20,31,22,2.0,moderate_right_skew,0.77159701465261,0.6200457723202251,5,8.0,IG
+Number_of_raw_Observations,Number_of_below_detect_Observations,Number_of_excluded_Observations,Number_of_final_Observations,Number_of_Obs_near_dl,mdl,skewnessCategory,skewnessValue,coefficientOfVariation,averageAnnualMonthsSampled,inductionRatio,distributionCategory,RainZone
+51,15,20,31,22,2.0,moderate_right_skew,0.77159701465261,0.6200457723202251,5,8.0,IG,1

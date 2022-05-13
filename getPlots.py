@@ -46,9 +46,13 @@ metadataPath = os.path.join(dataPath, "MetaData")
 if not os.path.exists(metadataPath):
     os.makedirs(metadataPath)
 
-heatmapPlotPath = os.path.join(plotPath, "HeatMapPlots")
-if not os.path.exists(heatmapPlotPath):
-    os.makedirs(heatmapPlotPath)
+heatmapPlotPath_original = os.path.join(plotPath, "HeatMapPlots_original")
+if not os.path.exists(heatmapPlotPath_original):
+    os.makedirs(heatmapPlotPath_original)
+
+heatmapPlotPath_new = os.path.join(plotPath, "HeatMapPlots_new")
+if not os.path.exists(heatmapPlotPath_new):
+    os.makedirs(heatmapPlotPath_new)
 
 quartilePlotPath = os.path.join(plotPath, "QuartilePlots")
 if not os.path.exists(quartilePlotPath):
@@ -99,9 +103,9 @@ def create_output():
         csv_files = glob.glob(os.path.join(dir, "*.csv"))
         all_metadata_files.extend(csv_files)
 
-    Copper_ScatterData = pd.DataFrame(columns = ["N", "Quartile", "median", "std", "rpd", "Location", "Flow", "Analyte", "NumObservations", "NearMedianDetectionLimit", "NumObservationsBelowDetect","changeRPD", "percentOriginal", "skewnessCategory", "skewnessValue", "coefficientOfVariation", "averageAnnualMonthsSampled", "inductionRatio", "distributionCategory"])
-    TSS_ScatterData = pd.DataFrame(columns = ["N", "Quartile", "median", "std", "rpd", "Location", "Flow", "Analyte", "NumObservations", "NearMedianDetectionLimit", "NumObservationsBelowDetect","changeRPD", "percentOriginal", "skewnessCategory", "skewnessValue", "coefficientOfVariation", "averageAnnualMonthsSampled", "inductionRatio", "distributionCategory"])
-    Phosphorus_ScatterData = pd.DataFrame(columns = ["N", "Quartile", "median", "std", "rpd", "Location", "Flow", "Analyte", "NumObservations", "NearMedianDetectionLimit", "NumObservationsBelowDetect", "changeRPD", "percentOriginal", "skewnessCategory", "skewnessValue", "coefficientOfVariation", "averageAnnualMonthsSampled", "inductionRatio",  "distributionCategory"])
+    Copper_ScatterData = pd.DataFrame(columns = ["N", "Quartile", "median", "std", "rpd", "Location", "Flow", "Analyte", "NumObservations", "NearMedianDetectionLimit", "NumObservationsBelowDetect","changeRPD", "percentOriginal", "skewnessCategory", "skewnessValue", "coefficientOfVariation", "averageAnnualMonthsSampled", "inductionRatio", "distributionCategory", "RainZone"])
+    TSS_ScatterData = pd.DataFrame(columns = ["N", "Quartile", "median", "std", "rpd", "Location", "Flow", "Analyte", "NumObservations", "NearMedianDetectionLimit", "NumObservationsBelowDetect","changeRPD", "percentOriginal", "skewnessCategory", "skewnessValue", "coefficientOfVariation", "averageAnnualMonthsSampled", "inductionRatio", "distributionCategory", "RainZone"])
+    Phosphorus_ScatterData = pd.DataFrame(columns = ["N", "Quartile", "median", "std", "rpd", "Location", "Flow", "Analyte", "NumObservations", "NearMedianDetectionLimit", "NumObservationsBelowDetect", "changeRPD", "percentOriginal", "skewnessCategory", "skewnessValue", "coefficientOfVariation", "averageAnnualMonthsSampled", "inductionRatio",  "distributionCategory", "RainZone"])
 
     for dataFile in all_original_files:
         fileName = os.path.basename(dataFile).split(".")[0]
@@ -155,6 +159,7 @@ def create_output():
         heatmapData["coefficientOfVariation"] = metadataDataframe["coefficientOfVariation"].iloc[0]
         heatmapData["averageAnnualMonthsSampled"] = metadataDataframe["averageAnnualMonthsSampled"].iloc[0]
         heatmapData["inductionRatio"] = metadataDataframe["inductionRatio"].iloc[0]
+        heatmapData["RainZone"] = metadataDataframe["RainZone"].iloc[0]
         heatmapData = heatmapData.reset_index()
         heatmapData["changeRPD"] = heatmapData.groupby(["Quartile"])["rpd"].apply(lambda row: abs(row - row.shift())).fillna(0)
         heatmapData["percentOriginal"] = heatmapData.apply(lambda row: (int(row["N"].split("=")[1])/row["NumObservations"]) * 100, axis = 1)
@@ -265,7 +270,7 @@ def create_output():
     merged_original_and_resampled_data = pd.concat(all_merged_resample)
     merged_original_and_resampled_data.to_csv(os.path.join(scatterDataPath, "merged_original_and_resampled_data.csv"), index = False)
 
-def create_heatmap():
+def create_heatmap_original():
     subDirs = glob.glob(os.path.join(heatmapDataPath, "*"))
 
     for dir in subDirs:
@@ -284,7 +289,7 @@ def create_heatmap():
                     df["N"] = df["N"].astype("category").cat.reorder_categories(["n=25", "n=20", "n=15", "n=10", "n=5"])
 
             inflow_combined = pd.concat(inflow_dfs)
-            get_heatmap(inflow_combined)
+            get_heatmap_original(inflow_combined)
 
         outflow = [file for file in glob.glob(os.path.join(dir, "*.csv")) if "outflow" in os.path.basename(file).lower()]
         outflow_dfs = [pd.read_csv(file) for file in outflow]
@@ -301,10 +306,10 @@ def create_heatmap():
                     df["N"] = df["N"].astype("category").cat.reorder_categories(["n=25", "n=20", "n=15", "n=10", "n=5"])
 
             outflow_combined = pd.concat(outflow_dfs)
-            get_heatmap(outflow_combined)
+            get_heatmap_original(outflow_combined)
 
 
-def get_heatmap(df):
+def get_heatmap_original(df):
     phos_obs = 0
     phos_dl = 0
 
@@ -353,16 +358,105 @@ def get_heatmap(df):
                       scale_y_discrete(breaks = ["n=25", "n=20", "n=15", "n=10", "n=5"], limits = df["N"].unique().tolist()[::-1], drop = False, expand = (0.1, 0.1))
     )
 
-    LocAnalyte = os.path.join(heatmapPlotPath, df["Location"].iloc[0])
+    LocAnalyte = os.path.join(heatmapPlotPath_original, df["Location"].iloc[0])
     if not os.path.exists(LocAnalyte):
         os.makedirs(LocAnalyte)
 
     heatmap.save(os.path.join(LocAnalyte, df["Location"].iloc[0] + "_" + df["Flow"].iloc[0] + ".png"))
 
+
+def create_heatmap_new():
+    subDirs = glob.glob(os.path.join(heatmapDataPath, "*"))
+
+    for dir in subDirs:
+        files = [file for file in glob.glob(os.path.join(dir, "*.csv"))]
+        dfs = [pd.read_csv(file) for file in files]
+        if dfs:
+            for df in dfs:
+                values = df["N"].unique()
+                if "n=20" not in values and "n=25" not in values and "n=15" not in values:
+                    df["N"] = df["N"].astype("category").cat.reorder_categories(["n=10", "n=5"])
+                if "n=20" not in values and "n=25" not in values and "n=15" in values:
+                    df["N"] = df["N"].astype("category").cat.reorder_categories(["n=15", "n=10", "n=5"])
+                if "n=20" in values and "n=25" not in values:
+                    df["N"] = df["N"].astype("category").cat.reorder_categories(["n=20", "n=15", "n=10", "n=5"])
+                if "n=20" in values and "n=25" in values:
+                    df["N"] = df["N"].astype("category").cat.reorder_categories(["n=25", "n=20", "n=15", "n=10", "n=5"])
+
+            combined = pd.concat(dfs)
+            for analyte in combined["Analyte"].unique():
+                get_heatmap_new(combined[combined["Analyte"] == analyte])
+
+def get_heatmap_new(df):
+    df["Analyte"].replace({
+            "Copper" : "Dissolved Copper",
+            "Phosphorus" : "Total Phosphorus",
+            "TSS" : "Total Suspended Solids"
+            }, inplace = True)
+
+    df["Quartile"].replace({
+            0.1 : "10th",
+            0.25 : "25th",
+            0.5 : "50th",
+            0.75 : "75th",
+            0.9 : "90th"
+            }, inplace = True)
+
+    df["Quartile"] = df["Quartile"].astype("category").cat.reorder_categories(["10th", "25th", "50th", "75th", "90th"])
+
+    if df["RainZone"].iloc[0] == 1:
+        RainZoneLocation = "Great Lakes"
+    elif df["RainZone"].iloc[0] == 2:
+        RainZoneLocation = "North-East"
+    elif df["RainZone"].iloc[0] == 3:
+        RainZoneLocation = "South-East"
+    elif df["RainZone"].iloc[0] == 6:
+        RainZoneLocation = "South-West"
+    elif df["RainZone"].iloc[0] == 9:
+        RainZoneLocation = "Rocky Mountains"
+
+    for analyte in df["Analyte"].unique():
+        df["rpd"] = df["rpd"].astype(np.int)
+        df["Quartile"] = df["Quartile"].astype("category")
+        df["NumObservations"] = df["NumObservations"].astype("str") + "\n" + df["Flow"]
+        flows_contained = df["Flow"].unique().tolist()
+        if "Inflow" in flows_contained and "Outflow" in flows_contained:
+            unique_num_obs_strings = df["NumObservations"].unique().tolist()
+            sorted = [s for s in unique_num_obs_strings if "Inflow" in s] + [s for s in unique_num_obs_strings if "Outflow" in s]
+            df["NumObservations"] = df["NumObservations"].astype("category").cat.reorder_categories(sorted)
+
+        heatmap_colors = ["#1cac78", "#b2ec5d", "#c5e384", "#ffae42", "#ffa343", "#ff7f49", "#ff5349", "#ff2b2b", "#fc2847", "#cb4154"]
+
+        heatmap = (ggplot(df, aes(x = "NumObservations", y = "N", fill = "rpd", label = "rpd")) +
+                          geom_tile(aes(height = 1, width = 1, group = "Flow")) +
+                          ggtitle("RPD for " + analyte + " in Rain Zone " + str(df["RainZone"].iloc[0]) + ": " + RainZoneLocation) +
+                          scale_fill_gradientn(colors = heatmap_colors, limits = [0, 100], breaks = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) +
+                          geom_text(color = "black", size = 22, family = "serif") +
+                          xlab(df["Location"].iloc[0]) +
+                          ylab("Number of Events in Hypothetical\nMonitoring Program") +
+                          facet_wrap("Quartile", ncol = 3, nrow = 2, scales = "free_x") +
+                          labs(fill = "Relative Percent Difference") +
+                          theme(figure_size = (16, 8), legend_key_size = 35, legend_direction = "horizontal", legend_position = (0.78, 0.25), text = element_text(color = "black", size = 22, family = "serif"), legend_title_align = "center", plot_title = element_text(size = 24)) +
+                          theme(panel_border = element_blank(), panel_grid_major = element_blank(), panel_grid_minor = element_blank(), panel_background = element_blank()) +
+                          scale_x_discrete(expand = (0.2, 0.2)) +
+                          scale_y_discrete(breaks = ["n=5", "n=10", "n=15", "n=20", "n=25"], limits = df["N"].unique().tolist(), drop = False, expand = (0.1, 0.1)) +
+                          theme(subplots_adjust = {"hspace" : 0.48})
+        )
+
+        LocAnalyte = os.path.join(heatmapPlotPath_new, str(df["RainZone"].iloc[0]))
+        if not os.path.exists(LocAnalyte):
+            os.makedirs(LocAnalyte)
+
+        heatmap.save(os.path.join(LocAnalyte, df["Location"].iloc[0] + "_" + df["Analyte"].iloc[0] + ".png"))
+
+
+
 create_output()
-create_heatmap()
+create_heatmap_original()
+create_heatmap_new()
 
 shutil.make_archive(os.path.join(os.getcwd(), exportPath, "HeatMapData"), "zip", heatmapDataPath)
-shutil.make_archive(os.path.join(os.getcwd(), exportPath, "HeatMapPlots"), "zip", heatmapPlotPath)
+shutil.make_archive(os.path.join(os.getcwd(), exportPath, "HeatMapPlots_original"), "zip", heatmapPlotPath_original)
+shutil.make_archive(os.path.join(os.getcwd(), exportPath, "HeatMapPlots_new"), "zip", heatmapPlotPath_new)
 shutil.make_archive(os.path.join(os.getcwd(), exportPath, "QuartilepPlots"), "zip", quartilePlotPath)
 shutil.make_archive(os.path.join(os.getcwd(), exportPath, "ScatterData"), "zip", scatterDataPath)

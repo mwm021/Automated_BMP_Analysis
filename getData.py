@@ -104,13 +104,13 @@ def getInduction(output_df):
     induction = max(output_df["EMC"])/min(output_df["EMC"])
     return induction
 
-def getMetaData(output_df, original, fileName, dirName, analyte, flow):
+def getMetaData(output_df, original, fileName, dirName, analyte, flow, RainZone):
+    global sum
     global median_detection_limits
     below_detect = original[original["wqqualifier"] == "U"]["value_subhalfdl"] * 2
     mdl = below_detect.median()
 
     median_detection_limits = median_detection_limits.append(pd.DataFrame([[fileName, analyte, flow, mdl]], columns = ["Location", "Analyte", "Flow", "median_detection_limit"]))
-
 
     if mdl == np.nan:
         metaData_df = pd.DataFrame({"Number_of_raw_Observations": len(original),
@@ -124,7 +124,8 @@ def getMetaData(output_df, original, fileName, dirName, analyte, flow):
                                     "coefficientOfVariation": variation(output_df["EMC"]),
                                     "averageAnnualMonthsSampled": getNumMonths(original),
                                     "inductionRatio": getInduction(output_df),
-                                    "distributionCategory": getDistribution(output_df)},
+                                    "distributionCategory": getDistribution(output_df),
+                                    "RainZone": RainZone },
                                    index=[0])
     else:
         metaData_df = pd.DataFrame({"Number_of_raw_Observations": len(original),
@@ -138,7 +139,8 @@ def getMetaData(output_df, original, fileName, dirName, analyte, flow):
                                     "coefficientOfVariation": variation(output_df["EMC"]),
                                     "averageAnnualMonthsSampled": getNumMonths(original),
                                     "inductionRatio": getInduction(output_df),
-                                    "distributionCategory": getDistribution(output_df)},
+                                    "distributionCategory": getDistribution(output_df),
+                                    "RainZone": RainZone },
                                    index=[0])
 
     LocAnalyteMetaData = os.path.join(metadataPath, fileName + "_" + analyte)
@@ -176,7 +178,7 @@ def resampleData(df, type, dirName, fileName, analyte):
                                       + type + "_" + analyte.lower() + "_resampled_" + str(sampleSize) + ".csv"), index=False)
 
 
-def getInflow(df, dirName, fileName, analyte, names):
+def getInflow(df, dirName, fileName, analyte, names, RainZone):
     global parent_quartiles
     original_inflow = df[df["msname"].isin(names)]
     inflow = df[(df["msname"].isin(names)) & (
@@ -198,7 +200,7 @@ def getInflow(df, dirName, fileName, analyte, names):
             return
         else:
             getMetaData(output_df, original_inflow,
-                        fileName, dirName, analyte, "inflow")
+                        fileName, dirName, analyte, "inflow", RainZone)
             LocAnalyte = os.path.join(outputPath, fileName + "_" + analyte)
             if not os.path.exists(LocAnalyte):
                 os.makedirs(LocAnalyte)
@@ -217,7 +219,7 @@ def getInflow(df, dirName, fileName, analyte, names):
             resampleData(output_df, "inflow", dirName, fileName, analyte)
 
 
-def getOutflow(df, dirName, fileName, analyte, names):
+def getOutflow(df, dirName, fileName, analyte, names, RainZone):
     global parent_quartiles
     original_outflow = df[df["msname"].isin(names)]
     outflow = df[(df["msname"].isin(names)) & (
@@ -239,7 +241,7 @@ def getOutflow(df, dirName, fileName, analyte, names):
             return
         else:
             getMetaData(output_df, original_outflow,
-                        fileName, dirName, analyte, "outflow")
+                        fileName, dirName, analyte, "outflow", RainZone)
             LocAnalyte = os.path.join(outputPath, fileName + "_" + analyte)
             if not os.path.exists(LocAnalyte):
                 os.makedirs(LocAnalyte)
@@ -295,13 +297,18 @@ def createDataframes():
                 tssSheet = np.where(key.loc[key["analyte"] == "total suspended solids, ns"]["sheet"].empty,
                                     tssSheet, key.loc[key["analyte"] == "total suspended solids, ns"]["sheet"])
 
+                if dirName == "NSWQ":
+                    RainZone = 6
+                else:
+                    RainZone = dirName
+
                 if phosphorusSheet.size != 0:
                     phosphorus = pd.read_excel(
                         file, sheet_name=str(phosphorusSheet[0]))
                     getInflow(phosphorus, dirName, fileName,
-                              "Phosphorus", in_names)
+                              "Phosphorus", in_names, RainZone)
                     getOutflow(phosphorus, dirName, fileName,
-                               "Phosphorus", out_names)
+                               "Phosphorus", out_names, RainZone)
 
                     if len(phosphorus[(phosphorus["msname"].isin(in_names)) & (phosphorus["initialscreen_flag"] != "No")]) >= 15:
                         num_inflow = len(phosphorus[(phosphorus["msname"].isin(in_names)) & (phosphorus["initialscreen_flag"] != "No")]["msname"].unique())
@@ -309,18 +316,18 @@ def createDataframes():
 
                 if tssSheet.size != 0:
                     tss = pd.read_excel(file, sheet_name=str(tssSheet[0]))
-                    getInflow(tss, dirName, fileName, "TSS", in_names)
-                    getOutflow(tss, dirName, fileName, "TSS", out_names)
+                    getInflow(tss, dirName, fileName, "TSS", in_names, RainZone)
+                    getOutflow(tss, dirName, fileName, "TSS", out_names, RainZone)
 
                     if len(tss[(tss["msname"].isin(in_names)) & (tss["initialscreen_flag"] != "No")]) >= 15:
                         num_inflow = len(tss[(tss["msname"].isin(in_names)) & (tss["initialscreen_flag"] != "No")]["msname"].unique())
-                        numInflows =numInflows.append(pd.DataFrame([[fileName, "TSS", num_inflow]], columns = ["Location", "Analyte", "numInflow"]))
+                        numInflows = numInflows.append(pd.DataFrame([[fileName, "TSS", num_inflow]], columns = ["Location", "Analyte", "numInflow"]))
 
                 if copperSheet.size != 0:
                     copper = pd.read_excel(
                         file, sheet_name=str(copperSheet[0]))
-                    getInflow(copper, dirName, fileName, "Copper", in_names)
-                    getOutflow(copper, dirName, fileName, "Copper", out_names)
+                    getInflow(copper, dirName, fileName, "Copper", in_names, RainZone)
+                    getOutflow(copper, dirName, fileName, "Copper", out_names, RainZone)
 
                     if len(copper[(copper["msname"].isin(in_names)) & (copper["initialscreen_flag"] != "No")]) >= 15:
                         num_inflow = len(copper[(copper["msname"].isin(in_names)) & (copper["initialscreen_flag"] != "No")]["msname"].unique())
