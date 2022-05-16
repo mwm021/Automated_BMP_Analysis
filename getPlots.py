@@ -368,6 +368,8 @@ def get_heatmap_original(df):
 def create_heatmap_new():
     subDirs = glob.glob(os.path.join(heatmapDataPath, "*"))
 
+    df_list = []
+
     for dir in subDirs:
         files = [file for file in glob.glob(os.path.join(dir, "*.csv"))]
         dfs = [pd.read_csv(file) for file in files]
@@ -383,9 +385,13 @@ def create_heatmap_new():
                 if "n=20" in values and "n=25" in values:
                     df["N"] = df["N"].astype("category").cat.reorder_categories(["n=25", "n=20", "n=15", "n=10", "n=5"])
 
-            combined = pd.concat(dfs)
-            for analyte in combined["Analyte"].unique():
-                get_heatmap_new(combined[combined["Analyte"] == analyte])
+                df_list.append(df)
+
+    combined = pd.concat(df_list)
+
+    for RainZone in combined["RainZone"].unique():
+        for analyte in combined[combined["RainZone"] == RainZone]["Analyte"].unique():
+            get_heatmap_new(combined[(combined["RainZone"] == RainZone) & (combined["Analyte"] == analyte)])
 
 def get_heatmap_new(df):
     df["Analyte"].replace({
@@ -403,6 +409,10 @@ def get_heatmap_new(df):
             }, inplace = True)
 
     df["Quartile"] = df["Quartile"].astype("category").cat.reorder_categories(["10th", "25th", "50th", "75th", "90th"])
+    if len(df["Flow"].unique()) == 2:
+        df["Flow"] = df["Flow"].astype("category").cat.reorder_categories(["Inflow", "Outflow"])
+
+    df.sort_values(["NumObservations", "Flow"], inplace = True)
 
     if df["RainZone"].iloc[0] == 1:
         RainZoneLocation = "Great Lakes"
@@ -415,40 +425,32 @@ def get_heatmap_new(df):
     elif df["RainZone"].iloc[0] == 9:
         RainZoneLocation = "Rocky Mountains"
 
-    for analyte in df["Analyte"].unique():
-        df["rpd"] = df["rpd"].astype(np.int)
-        df["Quartile"] = df["Quartile"].astype("category")
-        df["NumObservations"] = df["NumObservations"].astype("str") + "\n" + df["Flow"]
-        flows_contained = df["Flow"].unique().tolist()
-        if "Inflow" in flows_contained and "Outflow" in flows_contained:
-            unique_num_obs_strings = df["NumObservations"].unique().tolist()
-            sorted = [s for s in unique_num_obs_strings if "Inflow" in s] + [s for s in unique_num_obs_strings if "Outflow" in s]
-            df["NumObservations"] = df["NumObservations"].astype("category").cat.reorder_categories(sorted)
+    df["rpd"] = df["rpd"].astype(np.int)
 
-        heatmap_colors = ["#1cac78", "#b2ec5d", "#c5e384", "#ffae42", "#ffa343", "#ff7f49", "#ff5349", "#ff2b2b", "#fc2847", "#cb4154"]
+    heatmap_colors = ["#1cac78", "#b2ec5d", "#c5e384", "#ffae42", "#ffa343", "#ff7f49", "#ff5349", "#ff2b2b", "#fc2847", "#cb4154"]
 
-        heatmap = (ggplot(df, aes(x = "NumObservations", y = "N", fill = "rpd", label = "rpd")) +
-                          geom_tile(aes(height = 1, width = 1, group = "Flow")) +
-                          ggtitle("RPD for " + analyte + " in Rain Zone " + str(df["RainZone"].iloc[0]) + ": " + RainZoneLocation) +
-                          scale_fill_gradientn(colors = heatmap_colors, limits = [0, 100], breaks = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) +
-                          geom_text(color = "black", size = 22, family = "serif") +
-                          xlab(df["Location"].iloc[0]) +
-                          ylab("Number of Events in Hypothetical\nMonitoring Program") +
-                          facet_wrap("Quartile", ncol = 3, nrow = 2, scales = "free_x") +
-                          labs(fill = "Relative Percent Difference") +
-                          theme(figure_size = (16, 8), legend_key_size = 35, legend_direction = "horizontal", legend_position = (0.78, 0.25), text = element_text(color = "black", size = 22, family = "serif"), legend_title_align = "center", plot_title = element_text(size = 24)) +
-                          theme(panel_border = element_blank(), panel_grid_major = element_blank(), panel_grid_minor = element_blank(), panel_background = element_blank()) +
-                          scale_x_discrete(expand = (0.2, 0.2)) +
-                          scale_y_discrete(breaks = ["n=5", "n=10", "n=15", "n=20", "n=25"], limits = df["N"].unique().tolist(), drop = False, expand = (0.1, 0.1)) +
-                          theme(subplots_adjust = {"hspace" : 0.48})
-        )
+    heatmap = (ggplot(df, aes(x = "Location", y = "N", fill = "rpd", label = "rpd")) +
+                      geom_tile(aes(height = 1, width = 1)) +
+                      ggtitle("RPD for " + df["Analyte"].iloc[0] + " in Rain Zone " + str(df["RainZone"].iloc[0]) + ": " + RainZoneLocation) +
+                      scale_fill_gradientn(colors = heatmap_colors, limits = [0, 100], breaks = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) +
+                      geom_text(color = "black", size = 22, family = "serif") +
+                      xlab("Site ID") +
+                      ylab("Number of Events in Hypothetical\nMonitoring Program") +
+                      facet_grid("Flow~Quartile", scales = "free") +
+                      labs(fill = "Relative Percent Difference") +
+                      theme(figure_size = (16, 8), legend_key_size = 35, legend_direction = "horizontal", legend_position = (0.5, 1.1), text = element_text(color = "black", size = 22, family = "serif"), legend_title_align = "center", plot_title = element_text(size = 24)) +
+                      theme(axis_text_x = element_text(rotation = 45, hjust = 1)) +
+                      theme(panel_border = element_blank(), panel_grid_major = element_blank(), panel_grid_minor = element_blank(), panel_background = element_blank()) +
+                      scale_x_discrete(expand = (0.2, 0.2)) +
+                      scale_y_discrete(breaks = ["n=5", "n=10", "n=15", "n=20", "n=25"], limits = df["N"].unique().tolist(), drop = False, expand = (0.1, 0.1)) +
+                      theme(subplots_adjust = {"hspace" : 0.15})
+    )
 
-        LocAnalyte = os.path.join(heatmapPlotPath_new, str(df["RainZone"].iloc[0]))
-        if not os.path.exists(LocAnalyte):
-            os.makedirs(LocAnalyte)
+    LocAnalyte = os.path.join(heatmapPlotPath_new, str(df["RainZone"].iloc[0]))
+    if not os.path.exists(LocAnalyte):
+        os.makedirs(LocAnalyte)
 
-        heatmap.save(os.path.join(LocAnalyte, df["Location"].iloc[0] + "_" + df["Analyte"].iloc[0] + ".png"))
-
+    heatmap.save(os.path.join(LocAnalyte, "RainZone" + str(df["RainZone"].iloc[0]) + "_" + df["Analyte"].iloc[0] + ".png"))
 
 
 create_output()
